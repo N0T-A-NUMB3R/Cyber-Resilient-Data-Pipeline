@@ -2,7 +2,8 @@
 
 Pipeline event-driven per l'ingestion e l'analisi di eventi di sicurezza in tempo reale.  
 Architettura containerizzata, pronta per il cloud, costruita su Java, .NET 8 e RabbitMQ.
-<img width="1407" height="768" alt="Gemini_Generated_Image_ntg6lwntg6lwntg6" src="https://github.com/user-attachments/assets/2c713181-3bf5-437a-be31-f461d7eadd30" />
+![photo_5956131157583793493_y (1)](https://github.com/user-attachments/assets/92b897c3-6314-44d8-bb84-545fdab08917)
+
 
 ---
 
