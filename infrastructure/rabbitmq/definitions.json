@@ -1,0 +1,74 @@
+{
+  "users": [
+    {
+      "name": "cyber_user",
+      "password": "CambiaMe_Forte123",
+      "tags": "administrator"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "cyber_user",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "vhosts": [{ "name": "/" }],
+  "exchanges": [
+    {
+      "name": "cyber.events.exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "cyber.events.dlx",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "cyber.events.raw",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "cyber.events.dlx",
+        "x-message-ttl": 86400000
+      }
+    },
+    {
+      "name": "cyber.events.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "cyber.events.exchange",
+      "vhost": "/",
+      "destination": "cyber.events.raw",
+      "destination_type": "queue",
+      "routing_key": "cyber.event.raw",
+      "arguments": {}
+    },
+    {
+      "source": "cyber.events.dlx",
+      "vhost": "/",
+      "destination": "cyber.events.dlq",
+      "destination_type": "queue",
+      "routing_key": "#",
+      "arguments": {}
+    }
+  ]
+}

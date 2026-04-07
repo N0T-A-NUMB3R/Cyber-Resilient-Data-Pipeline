@@ -1,0 +1,35 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "gateway", "gateway\gateway.csproj", "{2CADB68C-FB3B-D474-56C8-AE901F365B9C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "services", "services", "{5854FF58-B8C5-05C6-5BF2-ACE42193F22B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "analysis-service", "services\analysis-service\analysis-service.csproj", "{B407F0C3-8909-4A10-B2DD-19916119945A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2CADB68C-FB3B-D474-56C8-AE901F365B9C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2CADB68C-FB3B-D474-56C8-AE901F365B9C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2CADB68C-FB3B-D474-56C8-AE901F365B9C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2CADB68C-FB3B-D474-56C8-AE901F365B9C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B407F0C3-8909-4A10-B2DD-19916119945A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B407F0C3-8909-4A10-B2DD-19916119945A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B407F0C3-8909-4A10-B2DD-19916119945A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B407F0C3-8909-4A10-B2DD-19916119945A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B407F0C3-8909-4A10-B2DD-19916119945A} = {5854FF58-B8C5-05C6-5BF2-ACE42193F22B}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3E2FBA4C-FD3F-4461-92D5-A97A01CA57B4}
+	EndGlobalSection
+EndGlobal

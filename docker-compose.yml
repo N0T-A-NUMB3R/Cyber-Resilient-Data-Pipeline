@@ -1,0 +1,174 @@
+version: "3.9"
+
+# Prerequisito: Docker Desktop installato
+# Avvio:  cp .env.example .env  &&  docker-compose up --build
+
+networks:
+  dmz:
+    driver: bridge
+  private:
+    driver: bridge
+  data:
+    driver: bridge
+
+volumes:
+  sqlite_data:
+  mongodb_data:
+  rabbitmq_data:
+  prometheus_data:
+  grafana_data:
+
+services:
+
+  # ── INFRASTRUTTURA ─────────────────────────────────────────
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: rabbitmq
+    hostname: rabbitmq
+    networks: [private]
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./infrastructure/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./infrastructure/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json:ro
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:7-jammy
+    container_name: mongodb
+    networks: [data]
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DB}
+    volumes:
+      - mongodb_data:/data/db
+      - ./infrastructure/mongodb/init.js:/docker-entrypoint-initdb.d/init.js:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.51.2
+    container_name: prometheus
+    networks: [private, data]
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=7d"
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.4.2
+    container_name: grafana
+    networks: [private]
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on: [prometheus]
+    restart: unless-stopped
+
+  # ── APPLICAZIONE ───────────────────────────────────────────
+
+  ingestion-service:
+    build:
+      context: ./services/ingestion-service
+      dockerfile: Dockerfile
+    container_name: ingestion-service
+    networks: [private, data]
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:sqlite:/data/cyber_config.db
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
+      RABBITMQ_VHOST: /
+    volumes:
+      - sqlite_data:/data
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  analysis-service:
+    build:
+      context: ./services/analysis-service
+      dockerfile: Dockerfile
+    container_name: analysis-service
+    networks: [private, data]
+    ports:
+      - "8082:8082"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8082
+      RabbitMQ__Host: rabbitmq
+      RabbitMQ__Port: "5672"
+      RabbitMQ__User: ${RABBITMQ_USER}
+      RabbitMQ__Pass: ${RABBITMQ_PASS}
+      RabbitMQ__Vhost: /
+      MongoDB__ConnectionString: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@mongodb:27017
+      MongoDB__Database: ${MONGO_DB}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8082/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: yarp-gateway
+    networks: [dmz, private]
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+    depends_on:
+      ingestion-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped

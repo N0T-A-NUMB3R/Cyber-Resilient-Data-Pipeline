@@ -1,0 +1,21 @@
+# Secrets — never commit
+.env
+
+# Build artifacts
+**/bin/
+**/obj/
+**/target/
+**/.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea/
+.vscode/
+*.user
+*.suo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log

@@ -1,0 +1,60 @@
+server:
+  port: 8081
+  shutdown: graceful
+
+spring:
+  application:
+    name: ingestion-service
+
+  datasource:
+    url: jdbc:sqlite:/data/cyber_config.db
+    driver-class-name: org.sqlite.JDBC
+
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASS:guest}
+    virtual-host: ${RABBITMQ_VHOST:/}
+    connection-timeout: 5000
+    template:
+      retry:
+        enabled: true
+        initial-interval: 500ms
+        max-attempts: 5
+        multiplier: 2.0
+        max-interval: 10s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  health:
+    rabbit:
+      enabled: true
+
+logging:
+  pattern:
+    console: "%d{ISO8601} [%thread] %-5level %logger{36} - %msg%n"
+
+cyber:
+  rabbitmq:
+    exchange: cyber.events.exchange
+    routing-key: cyber.event.raw
+    queue: cyber.events.raw
+    dead-letter-exchange: cyber.events.dlx
+    dead-letter-queue: cyber.events.dlq
